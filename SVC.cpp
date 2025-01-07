@@ -43,7 +43,7 @@ public:
             tail = new_version;
             std::cout << "Your content has been added successfully." << std::endl;
         } else {
-            std::cout << "git322 did not detect any change to your file and will not create a new version." << std::endl;
+            std::cout << "SFV did not detect any change to your file and will not create a new version." << std::endl;
             delete new_version;
         }
     }
@@ -193,9 +193,9 @@ private:
 };
 
 
-class git322 {
+class git {
 public:
-    git322() : myList() {}
+    git() : myList() {}
 
     void add(const std::string& content) {
         myList.add(content);
@@ -224,35 +224,54 @@ protected:
     LinkedList myList;
 }; 
 
-class EnhancedGit322 : public git322 {
+class EnhancedGit : public git {
 public:
-    EnhancedGit322() : git322() {}
+    EnhancedGit() : git() {}
 
-    void add(const std::string& content){
-        git322::add(content);
-        saveToFile(); //maybe remove, but still works with this here.
+    void add(const std::string& content, std::string filename){
+        git::add(content);
+        saveToFile(filename); //maybe remove, but still works with this here.
     }
 
-    void remove(int version){
-        git322::remove(version);
-        saveToFile();
+    void remove(int version, std::string filename){
+        git::remove(version);
+        saveToFile(filename);
     }
     void load(int version, std::string filename) const {
-        git322::load(version, filename);
+        git::load(version, filename);
     }
     void compare(int version1, int version2) const {
-        git322::compare(version1, version2);
+        git::compare(version1, version2);
     }
 
     void search(const std::string& keyword) const {
-        git322::search(keyword);
+        git::search(keyword);
     }
     void print() const {
-        git322::print();
+        git::print();
+    }
+
+    std::string generateVersionFilename(const std::string& filename) const {
+        size_t dot_pos = filename.find_last_of('.');
+        std::string base_name = (dot_pos != std::string::npos) 
+                                ? filename.substr(0, dot_pos) 
+                                : filename;
+        std::string extension = (dot_pos != std::string::npos) 
+                                ? filename.substr(dot_pos) 
+                                : "";
+
+        // Combine base name, original extension, and "_version.txt"
+        return base_name + extension + "_version.txt";
     }
 // save the linked list to a file.
-    void saveToFile() const {
-        std::ofstream file("versions.txt");
+    void saveToFile(const std::string& filename) const {
+        std::string version_filename = generateVersionFilename(filename);
+
+        std::ofstream file(version_filename);
+        // if (!file.is_open()) {
+        //     std::cerr << "Error: Could not open file " << version_filename << std::endl;
+        //     return;
+        // }
         LinkedList::FileVersion* current = this->myList.head;
         while (current != nullptr) {
             file << current->version_number << std::endl;
@@ -264,8 +283,14 @@ public:
         file.close();
     }
 //load the linked list from the file if it exists and is not emoty
-    void loadFromFile() {
-        std::ifstream file("versions.txt");
+    void loadFromFile(const std::string& filename) {
+        std::string version_filename = generateVersionFilename(filename);
+
+        std::ifstream file(version_filename);
+        // if (!file.is_open()) {
+        //     std::cerr << "Error: Could not open file " << version_filename << std::endl;
+        //     return;
+        // }
         if (file.is_open() && file.peek() != std::ifstream::traits_type::eof()) {
             std::string line;
             while (std::getline(file, line) && !line.empty()) {
@@ -298,8 +323,15 @@ int main(int argc, char* argv[]){
 		cout << "Improper form. Please have >> ProgramName FileToControl";
 		return 0;
 	}
-    EnhancedGit322 myGit;
-    myGit.loadFromFile();
+
+    fstream file(argv[1]);
+    if (!file) { cout << "Unable to open file; file may not exist" << endl; return 0;}
+    file.close();
+
+
+
+    EnhancedGit myGit;
+    myGit.loadFromFile(argv[1]);
     //make loop
     cout << "Welcome to the Simple File Versioning system! \nTo add the content of your file to version control press 'a' \nTo remove a version press 'r' \nTo load a version press 'l' \nTo print to the screen the detailed list of all versions press 'p' \nTo compare any 2 versions press 'c' \nTo search versions for a keyword press 's' \nTo exit press 'e' " << endl;
     char usr_input; 
@@ -312,7 +344,7 @@ int main(int argc, char* argv[]){
             if (file.is_open()){
                 stringstream buf;
                 buf << file.rdbuf();
-                myGit.add(buf.str());
+                myGit.add(buf.str(), argv[1]);
             }
             file.close();
         //clodse file
@@ -330,7 +362,7 @@ int main(int argc, char* argv[]){
             cout << "Enter the number of the version that you want to delete: ";
             int version;
             cin >> version;
-            myGit.remove(version);
+            myGit.remove(version, argv[1]);
         } else if (usr_input == 'c'){
             int version1, version2;
             cout << "Please enter the number of the first version to compare: ";
@@ -348,7 +380,7 @@ int main(int argc, char* argv[]){
         }
             
     }
-    myGit.saveToFile();
+    myGit.saveToFile(argv[1]);
 
     return 1;
 
