@@ -59,7 +59,7 @@ public:
         }
     }
 
-    void load(int version) const {
+    void load(int version, std::string filename) const {
         FileVersion* current = head;
         while (current != nullptr && current->version_number != version) {
             current = current->next;
@@ -68,7 +68,7 @@ public:
             std::cout << "Please enter a valid version number. If you are not sure please press 'p' to list all valid version numbers." << std::endl;
             return;
         }
-        std::ofstream file("file.txt"); 
+        std::ofstream file(filename); 
         file << current->data;
         file.close();
     }
@@ -205,8 +205,8 @@ public:
         myList.print(); // cause faxing is outdated
     }
 
-    void load(int version) const {
-        myList.load(version);
+    void load(int version, std::string filename) const {
+        myList.load(version, filename);
     }
     void remove(int version) {
         myList.remove(version);
@@ -237,8 +237,8 @@ public:
         git322::remove(version);
         saveToFile();
     }
-    void load(int version) const {
-        git322::load(version);
+    void load(int version, std::string filename) const {
+        git322::load(version, filename);
     }
     void compare(int version1, int version2) const {
         git322::compare(version1, version2);
@@ -293,7 +293,11 @@ public:
 };
 
 
-int main(){
+int main(int argc, char* argv[]){
+	if (argc !=  2) {
+		cout << "Improper form. Please have >> ProgramName FileToControl";
+		return 0;
+	}
     EnhancedGit322 myGit;
     myGit.loadFromFile();
     //make loop
@@ -303,7 +307,8 @@ int main(){
     while (usr_input != 'e') {
         cin >> usr_input;
         if (usr_input == 'a'){
-            fstream file("file.txt");
+            fstream file(argv[1]);
+		if (!file) { cout << "Unable to open file; file may not exist" << endl; return 0;}
             if (file.is_open()){
                 stringstream buf;
                 buf << file.rdbuf();
@@ -319,7 +324,7 @@ int main(){
             cout << "which version would you like to load" <<endl;
             int version;
             cin >> version;
-            myGit.load(version);  
+            myGit.load(version, argv[1]);  
 
         } else if (usr_input == 'r'){
             cout << "Enter the number of the version that you want to delete: ";
