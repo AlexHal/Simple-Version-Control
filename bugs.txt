@@ -1,0 +1,8 @@
+Change the fact we have file.txt hard coded
+Maybe have it as an input ? 
+or have another option to add file.
+for each file added we make a new ll
+new id for version? xx-xx?
+
+change to basic fvs
+have search check all options.
